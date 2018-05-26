@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.songweather.android.gson.Forecast;
 import com.songweather.android.gson.Utility;
 import com.songweather.android.gson.Weather;
+import com.songweather.android.service.AutoUpdateService;
 import com.songweather.android.util.HttpUtill;
 
 import org.w3c.dom.Text;
@@ -215,6 +216,8 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(carWash);
         sportText.setText(sport);
         weatherLayout.setVisibility(View.VISIBLE);
+        Intent intent =new Intent(this, AutoUpdateService.class);
+        startService(intent);
 
     }
     /* added by ZJS
