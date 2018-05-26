@@ -6,11 +6,15 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -37,13 +41,17 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView titleUpdateTime;
     private TextView degreeText;
     private TextView aqiText;
-    private  TextView weatherInfoText;
+    private TextView weatherInfoText;
     private LinearLayout forecastLayout;
     private TextView pm25Text;
     private TextView comforText;
     private TextView carWashText;
     private TextView sportText;
     private ImageView bingPicImg;
+    public SwipeRefreshLayout swipeRefresh;
+    private  String mWeatherId;
+    public DrawerLayout drawerLayout;
+    private Button navButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,19 +73,36 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText=(TextView)findViewById(R.id.car_wash_text);
         sportText=(TextView)findViewById(R.id.sport_text);
         bingPicImg= (ImageView)findViewById(R.id.bing_pic_img);
+        swipeRefresh=(SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
+        drawerLayout=(DrawerLayout)findViewById(R.id.drawer_layout);
+        navButton=(Button)findViewById(R.id.nav_button);
+        navButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
         SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather",null);
         String bingPic=prefs.getString("bing_pic",null);
         if (weatherString !=null){
             Weather weather = Utility.handleWeatherResponse(weatherString);
+            mWeatherId=weather.basic.weatherId;
             showWeatherInfo(weather);
 
         }else {
-            String weatherID= getIntent().getStringExtra("weather_id");
+            mWeatherId= getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeather(weatherID);
+            requestWeather(mWeatherId);
 
         }
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestWeather(mWeatherId);
+            }
+        });
         if (bingPic !=null){
             Glide.with(this).load(bingPic).into(bingPicImg);
         }
@@ -119,6 +144,7 @@ public class WeatherActivity extends AppCompatActivity {
                    @Override
                    public void run() {
                        Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_LONG).show();
+                       swipeRefresh.setRefreshing(false);
                    }
                });
             }
@@ -134,11 +160,13 @@ public class WeatherActivity extends AppCompatActivity {
                             SharedPreferences.Editor editor=PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
                             editor.putString("weather",responseText);
                             editor.apply();
+                            mWeatherId=weather.basic.weatherId;
                             showWeatherInfo(weather);
                         }
                         else {
                             Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_LONG).show();
                         }
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
 
@@ -157,12 +185,12 @@ public class WeatherActivity extends AppCompatActivity {
         weatherInfoText.setText(weatherInfo);
         forecastLayout.removeAllViews();
 
-        Toast.makeText(WeatherActivity.this,"weather.forecastList is"+weather.forecastList.size(),Toast.LENGTH_LONG).show();
-        int i=0;
+        //Toast.makeText(WeatherActivity.this,"weather.forecastList is"+weather.forecastList.size(),Toast.LENGTH_LONG).show();
+        //int i=0;
         for (Forecast forecast: weather.forecastList){
 
-            Toast.makeText(WeatherActivity.this,"view "+i,Toast.LENGTH_LONG).show();
-            i++;
+        // Toast.makeText(WeatherActivity.this,"view "+i,Toast.LENGTH_LONG).show();
+        //i++;
             View view=LayoutInflater.from(this).inflate(R.layout.forecast_item,forecastLayout,false);
             TextView dateText =(TextView)view.findViewById(R.id.date_text);
             TextView infoText=(TextView)view.findViewById(R.id.info_text);
@@ -176,7 +204,7 @@ public class WeatherActivity extends AppCompatActivity {
 
         }
         if (weather.aqi!= null){
-            Toast.makeText(WeatherActivity.this,"AQI: "+weather.aqi.city.aqi,Toast.LENGTH_LONG).show();
+        // Toast.makeText(WeatherActivity.this,"AQI: "+weather.aqi.city.aqi,Toast.LENGTH_LONG).show();
             aqiText.setText(weather.aqi.city.aqi);
             pm25Text.setText(weather.aqi.city.pm25);
         }
@@ -189,6 +217,7 @@ public class WeatherActivity extends AppCompatActivity {
         weatherLayout.setVisibility(View.VISIBLE);
 
     }
+    /* added by ZJS
    public boolean onKeyDown(int keyCode,KeyEvent event){
     if (keyCode==KeyEvent.KEYCODE_BACK)  {
         Intent myInent= new Intent(WeatherActivity.this,MainActivity.class);
@@ -197,4 +226,5 @@ public class WeatherActivity extends AppCompatActivity {
     }
     return super.onKeyDown(keyCode,event);
    }
+   */
 }
